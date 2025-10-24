@@ -222,6 +222,94 @@
                 font-size: 1rem;
             }
         }
+
+        /* Draggable Window Styles */
+        .draggable-window {
+            position: absolute;
+            background: #fff;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+            min-width: 280px;
+            max-width: 400px;
+            z-index: 100;
+            transition: box-shadow 0.2s ease;
+            touch-action: none; /* Prevent default touch behaviors */
+        }
+
+        .draggable-window.dragging {
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15), 0 10px 10px rgba(0, 0, 0, 0.1);
+            opacity: 0.95;
+            z-index: 200;
+        }
+
+        .draggable-handle {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+            cursor: grab;
+            user-select: none;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .draggable-handle:active {
+            cursor: grabbing;
+        }
+
+        .draggable-window.dragging .draggable-handle {
+            cursor: grabbing;
+        }
+
+        .draggable-content {
+            padding: 1.25rem;
+            color: #4b5563;
+            line-height: 1.6;
+        }
+
+        .draggable-content h3 {
+            color: #1f2937;
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .draggable-content p {
+            font-size: 0.9375rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Responsive adjustments for draggable windows */
+        @media (max-width: 768px) {
+            .draggable-window {
+                min-width: 240px;
+                max-width: 320px;
+            }
+
+            .draggable-handle {
+                padding: 0.875rem 1rem;
+                font-size: 0.9375rem;
+            }
+
+            .draggable-content {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .draggable-window {
+                min-width: 200px;
+                max-width: 280px;
+            }
+
+            .draggable-content h3 {
+                font-size: 1rem;
+            }
+
+            .draggable-content p {
+                font-size: 0.875rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -253,6 +341,34 @@
                 <a href="#contact" class="cta-button">Get Started Today</a>
             </div>
         </section>
+
+        <!-- Draggable Windows -->
+        <div class="draggable-window" data-draggable style="top: 200px; left: 50px;">
+            <div class="draggable-handle">Window 1</div>
+            <div class="draggable-content">
+                <h3>Draggable Panel</h3>
+                <p>Click and hold the title bar to drag this window around the screen.</p>
+                <p>This window stays within the viewport boundaries.</p>
+            </div>
+        </div>
+
+        <div class="draggable-window" data-draggable style="top: 300px; left: 450px;">
+            <div class="draggable-handle">Window 2</div>
+            <div class="draggable-content">
+                <h3>Interactive Element</h3>
+                <p>Try dragging this window to see smooth movement and visual feedback.</p>
+                <p>Works on both desktop and touch devices!</p>
+            </div>
+        </div>
+
+        <div class="draggable-window" data-draggable style="top: 400px; left: 850px;">
+            <div class="draggable-handle">Window 3</div>
+            <div class="draggable-content">
+                <h3>Feature Showcase</h3>
+                <p>Multiple windows can be dragged independently without interfering with each other.</p>
+                <p>Notice the cursor changes and shadow effects during dragging.</p>
+            </div>
+        </div>
     </main>
 
     <!-- Footer Section -->
@@ -288,5 +404,206 @@
             </div>
         </div>
     </footer>
+
+    <script>
+        /**
+         * DragManager - Handles drag and drop functionality for elements marked with data-draggable
+         * Uses Pointer Events API for unified mouse and touch support
+         */
+        class DragManager {
+            constructor() {
+                this.draggables = [];
+                this.currentDrag = null;
+                this.dragThreshold = 5; // Minimum pixels to distinguish drag from click
+                this.init();
+            }
+
+            init() {
+                // Find all elements with data-draggable attribute
+                const elements = document.querySelectorAll('[data-draggable]');
+                elements.forEach(element => {
+                    this.makeDraggable(element);
+                });
+            }
+
+            makeDraggable(element) {
+                const handle = element.querySelector('.draggable-handle') || element;
+
+                // Store draggable configuration
+                const dragConfig = {
+                    element: element,
+                    handle: handle,
+                    isDragging: false,
+                    startX: 0,
+                    startY: 0,
+                    initialX: 0,
+                    initialY: 0,
+                    currentX: 0,
+                    currentY: 0,
+                    hasMoved: false
+                };
+
+                this.draggables.push(dragConfig);
+
+                // Attach pointer event listeners to the handle
+                handle.addEventListener('pointerdown', (e) => this.onPointerDown(e, dragConfig));
+            }
+
+            onPointerDown(e, dragConfig) {
+                // Only handle left mouse button or touch
+                if (e.button !== undefined && e.button !== 0) return;
+
+                // Prevent default to avoid text selection
+                e.preventDefault();
+
+                // Get current position from transform or use positioned values
+                const rect = dragConfig.element.getBoundingClientRect();
+                const computedStyle = window.getComputedStyle(dragConfig.element);
+                const transform = computedStyle.transform;
+
+                // Parse existing transform or initialize to 0
+                if (transform && transform !== 'none') {
+                    const matrix = new DOMMatrix(transform);
+                    dragConfig.currentX = matrix.m41;
+                    dragConfig.currentY = matrix.m42;
+                } else {
+                    dragConfig.currentX = 0;
+                    dragConfig.currentY = 0;
+                }
+
+                // Store initial pointer position
+                dragConfig.startX = e.clientX;
+                dragConfig.startY = e.clientY;
+                dragConfig.initialX = dragConfig.currentX;
+                dragConfig.initialY = dragConfig.currentY;
+                dragConfig.hasMoved = false;
+
+                // Set current drag
+                this.currentDrag = dragConfig;
+
+                // Capture pointer for reliable tracking
+                dragConfig.handle.setPointerCapture(e.pointerId);
+
+                // Attach move and up listeners
+                dragConfig.handle.addEventListener('pointermove', this.onPointerMove);
+                dragConfig.handle.addEventListener('pointerup', this.onPointerUp);
+                dragConfig.handle.addEventListener('pointercancel', this.onPointerUp);
+            }
+
+            onPointerMove = (e) => {
+                if (!this.currentDrag) return;
+
+                const dragConfig = this.currentDrag;
+
+                // Calculate delta from initial position
+                const deltaX = e.clientX - dragConfig.startX;
+                const deltaY = e.clientY - dragConfig.startY;
+
+                // Check if movement exceeds threshold
+                if (!dragConfig.hasMoved) {
+                    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                    if (distance < this.dragThreshold) {
+                        return; // Not enough movement to start drag
+                    }
+                    dragConfig.hasMoved = true;
+                    dragConfig.isDragging = true;
+                    dragConfig.element.classList.add('dragging');
+                }
+
+                // Calculate new position
+                let newX = dragConfig.initialX + deltaX;
+                let newY = dragConfig.initialY + deltaY;
+
+                // Apply viewport boundary constraints
+                const constraints = this.getViewportConstraints(dragConfig.element);
+                newX = Math.max(constraints.minX, Math.min(newX, constraints.maxX));
+                newY = Math.max(constraints.minY, Math.min(newY, constraints.maxY));
+
+                // Update position
+                dragConfig.currentX = newX;
+                dragConfig.currentY = newY;
+
+                // Apply transform for smooth rendering with GPU acceleration
+                dragConfig.element.style.transform = `translate3d(${newX}px, ${newY}px, 0)`;
+            }
+
+            onPointerUp = (e) => {
+                if (!this.currentDrag) return;
+
+                const dragConfig = this.currentDrag;
+
+                // Remove dragging state
+                if (dragConfig.isDragging) {
+                    dragConfig.element.classList.remove('dragging');
+                }
+
+                // Clean up
+                dragConfig.isDragging = false;
+                dragConfig.hasMoved = false;
+
+                // Release pointer capture
+                if (e.pointerId !== undefined) {
+                    dragConfig.handle.releasePointerCapture(e.pointerId);
+                }
+
+                // Remove event listeners
+                dragConfig.handle.removeEventListener('pointermove', this.onPointerMove);
+                dragConfig.handle.removeEventListener('pointerup', this.onPointerUp);
+                dragConfig.handle.removeEventListener('pointercancel', this.onPointerUp);
+
+                // Clear current drag
+                this.currentDrag = null;
+            }
+
+            getViewportConstraints(element) {
+                const rect = element.getBoundingClientRect();
+                const elementStyle = window.getComputedStyle(element);
+                const elementRect = {
+                    width: rect.width,
+                    height: rect.height
+                };
+
+                // Get element's current position (top/left from style)
+                const top = parseFloat(elementStyle.top) || 0;
+                const left = parseFloat(elementStyle.left) || 0;
+
+                // Calculate viewport boundaries
+                // Ensure at least the handle (title bar) remains visible
+                const handleHeight = element.querySelector('.draggable-handle')?.offsetHeight || 40;
+
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+
+                // Calculate min/max with transform offsets
+                // Allow element to be dragged to edges but keep handle visible
+                const minX = -(left + elementRect.width - 100); // Keep 100px of width visible
+                const maxX = viewportWidth - left - 100; // Keep 100px visible on right
+                const minY = -top; // Don't allow dragging above viewport
+                const maxY = viewportHeight - top - handleHeight; // Keep handle visible at bottom
+
+                return {
+                    minX: minX,
+                    maxX: maxX,
+                    minY: minY,
+                    maxY: maxY
+                };
+            }
+        }
+
+        // Initialize drag functionality when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            const dragManager = new DragManager();
+        });
+
+        // Re-initialize on window resize to update constraints
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                // Constraints are recalculated on each drag, so no action needed here
+                // This listener is here for future enhancements if needed
+            }, 150);
+        });
+    </script>
 </body>
 </html>
