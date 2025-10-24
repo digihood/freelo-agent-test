@@ -122,6 +122,36 @@
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
 
+        /* Secondary CTA Button */
+        .cta-button-secondary {
+            display: inline-block;
+            background-color: transparent;
+            color: #fff;
+            padding: 1rem 2.5rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            border: 2px solid #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .cta-button-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Button Group Container */
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
         /* Footer Styles */
         footer {
             background-color: #1f2937;
@@ -250,7 +280,10 @@
             <div class="container">
                 <h1>Welcome to Modern Solutions</h1>
                 <p>Transform your business with innovative technology and creative design. We deliver exceptional results that exceed expectations.</p>
-                <a href="#contact" class="cta-button">Get Started Today</a>
+                <div class="button-group">
+                    <a href="#contact" class="cta-button">Get Started Today</a>
+                    <a href="#save" class="cta-button-secondary">Save</a>
+                </div>
             </div>
         </section>
     </main>
