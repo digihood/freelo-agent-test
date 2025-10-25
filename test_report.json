@@ -1,0 +1,14 @@
+{
+  "total_tests": 9,
+  "passed_tests": 9,
+  "failed_tests": 0,
+  "skipped_tests": 0,
+  "pass_rate": 1.0,
+  "failures": [],
+  "coverage": {},
+  "overall_coverage": 0.0,
+  "flakiness_signals": [],
+  "rerun_results": {},
+  "test_duration_seconds": 0.0,
+  "test_command": "python3 test_save_button.py"
+}
